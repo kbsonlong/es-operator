@@ -1,0 +1,14 @@
+apiVersion: db.alongparty.cn/v1
+kind: Elasticsearch
+metadata:
+  labels:
+    app.kubernetes.io/name: elasticsearch
+    app.kubernetes.io/instance: elasticsearch-sample
+    app.kubernetes.io/part-of: es-operator
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: es-operator
+  name: elasticsearch-sample
+spec:
+  # TODO(user): Add fields here
+  size: 4
+  image: docker.elastic.co/elasticsearch/elasticsearch:7.13.4

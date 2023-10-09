@@ -1,0 +1,31 @@
+# permissions for end users to edit elasticsearches.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: elasticsearch-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: es-operator
+    app.kubernetes.io/part-of: es-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: elasticsearch-editor-role
+rules:
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - elasticsearches
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - elasticsearches/status
+  verbs:
+  - get

@@ -1,0 +1,27 @@
+# permissions for end users to view elasticsearches.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: elasticsearch-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: es-operator
+    app.kubernetes.io/part-of: es-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: elasticsearch-viewer-role
+rules:
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - elasticsearches
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - elasticsearches/status
+  verbs:
+  - get
