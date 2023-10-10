@@ -5,34 +5,28 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: elasticsearches.db.alongparty.cn
+  name: kibanas.db.alongparty.cn
 spec:
   group: db.alongparty.cn
   names:
     categories:
     - db
-    kind: Elasticsearch
-    listKind: ElasticsearchList
-    plural: elasticsearches
+    kind: Kibana
+    listKind: KibanaList
+    plural: kibanas
     shortNames:
-    - es
-    singular: elasticsearch
+    - kb
+    singular: kibana
   scope: Namespaced
   versions:
   - additionalPrinterColumns:
     - jsonPath: .spec.size
       name: Size
       type: integer
-    - jsonPath: .status.health
-      name: Health
-      type: string
-    - jsonPath: .status.availableNodes
-      name: AvailableNodes
-      type: integer
     name: v1
     schema:
       openAPIV3Schema:
-        description: Elasticsearch is the Schema for the elasticsearches API
+        description: Kibana is the Schema for the kibanas API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
@@ -47,8 +41,25 @@ spec:
           metadata:
             type: object
           spec:
-            description: ElasticsearchSpec defines the desired state of Elasticsearch
+            description: KibanaSpec defines the desired state of Kibana
             properties:
+              esInfo:
+                properties:
+                  auth:
+                    properties:
+                      password:
+                        type: string
+                      username:
+                        type: string
+                    type: object
+                  host:
+                    type: string
+                  port:
+                    type: integer
+                  schema:
+                    default: http
+                    type: string
+                type: object
               image:
                 type: string
               resource:
@@ -104,24 +115,7 @@ spec:
                 type: integer
             type: object
           status:
-            description: ElasticsearchStatus defines the observed state of Elasticsearch
-            properties:
-              availableNodes:
-                description: AvailableNodes is the number of available instances.
-                format: int32
-                type: integer
-              health:
-                default: unknown
-                type: string
-              phase:
-                description: ElasticsearchOrchestrationPhase is the phase Elasticsearch
-                  is in from the controller point of view.
-                type: string
-              version:
-                description: 'Version of the stack resource currently running. During
-                  version upgrades, multiple versions may run in parallel: this value
-                  specifies the lowest version currently running.'
-                type: string
+            description: KibanaStatus defines the observed state of Kibana
             type: object
         type: object
     served: true

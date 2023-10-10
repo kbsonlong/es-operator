@@ -1,0 +1,13 @@
+apiVersion: db.alongparty.cn/v1
+kind: Kibana
+metadata:
+  labels:
+    app.kubernetes.io/name: kibana
+    app.kubernetes.io/instance: kibana-sample
+    app.kubernetes.io/part-of: es-operator
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: es-operator
+  name: kibana-sample
+spec:
+  size: 1
+  image:  docker.elastic.co/kibana/kibana:7.13.4

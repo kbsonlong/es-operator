@@ -103,3 +103,29 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - kibanas
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - kibanas/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - db.alongparty.cn
+  resources:
+  - kibanas/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-09 15:08:17
+ * @LastEditTime: 2023-10-10 18:20:32
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -30,15 +30,37 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+type ElasticsearchHealth string
+
+// Possible traffic light states Elasticsearch health can have.
+const (
+	ElasticsearchRedHealth     ElasticsearchHealth = "red"
+	ElasticsearchYellowHealth  ElasticsearchHealth = "yellow"
+	ElasticsearchGreenHealth   ElasticsearchHealth = "green"
+	ElasticsearchUnknownHealth ElasticsearchHealth = "unknown"
+)
+
+// ElasticsearchOrchestrationPhase is the phase Elasticsearch is in from the controller point of view.
+type ElasticsearchOrchestrationPhase string
+
+const (
+	// ElasticsearchReadyPhase is operating at the desired spec.
+	ElasticsearchReadyPhase ElasticsearchOrchestrationPhase = "Ready"
+	// ElasticsearchApplyingChangesPhase controller is working towards a desired state, cluster can be unavailable.
+	ElasticsearchApplyingChangesPhase ElasticsearchOrchestrationPhase = "ApplyingChanges"
+	// ElasticsearchMigratingDataPhase Elasticsearch is currently migrating data to another node.
+	ElasticsearchMigratingDataPhase ElasticsearchOrchestrationPhase = "MigratingData"
+	// ElasticsearchNodeShutdownStalledPhase Elasticsearch cannot make progress with a node shutdown during downscale or rolling upgrade.
+	ElasticsearchNodeShutdownStalledPhase ElasticsearchOrchestrationPhase = "Stalled"
+	// ElasticsearchResourceInvalid is marking a resource as invalid, should never happen if admission control is installed correctly.
+	ElasticsearchResourceInvalid ElasticsearchOrchestrationPhase = "Invalid"
+)
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // ElasticsearchSpec defines the desired state of Elasticsearch
 type ElasticsearchSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Elasticsearch. Edit elasticsearch_types.go to remove/update
 	Size      int32                          `json:"size,omitempty"`
 	Image     string                         `json:"image,omitempty"`
 	Resources k8scorev1.ResourceRequirements `json:"resource,omitempty"`
@@ -46,12 +68,23 @@ type ElasticsearchSpec struct {
 
 // ElasticsearchStatus defines the observed state of Elasticsearch
 type ElasticsearchStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+
+	// AvailableNodes is the number of available instances.
+	AvailableNodes int32 `json:"availableNodes,omitempty"`
+	// Version of the stack resource currently running. During version upgrades, multiple versions may run
+	// in parallel: this value specifies the lowest version currently running.
+	Version string `json:"version,omitempty"`
+	//+kubebuilder:default:= unknown
+	Health string                          `json:"health,omitempty"`
+	Phase  ElasticsearchOrchestrationPhase `json:"phase,omitempty"`
 }
 
 //+kubebuilder:object:root=true
 //+kubebuilder:subresource:status
+//+kubebuilder:resource:categories=db,path=elasticsearches,shortName=es,singular=elasticsearch
+//+kubebuilder:printcolumn:JSONPath=.spec.size,name=Size,type=integer
+//+kubebuilder:printcolumn:JSONPath=.status.health,name=Health,type=string
+//+kubebuilder:printcolumn:JSONPath=.status.availableNodes,name=AvailableNodes,type=integer
 
 // Elasticsearch is the Schema for the elasticsearches API
 type Elasticsearch struct {
