@@ -12,3 +12,6 @@ spec:
   # TODO(user): Add fields here
   size: 5
   image: docker.elastic.co/elasticsearch/elasticsearch:7.13.4
+  resource:
+    limits:
+      memory: 1G

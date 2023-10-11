@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 18:35:49
+ * @LastEditTime: 2023-10-11 16:06:11
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -85,25 +85,29 @@ func (r *ElasticsearchReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{RequeueAfter: time.Second * 5}, err
 	}
 
-	k8s.ReconcileConfigMap(ctx, es, req, r.Client, r.Scheme)
-	k8s.ReconcileElasticServices(ctx, es, req, r.Client, r.Scheme)
-	k8s.ReconcileStatefulSet(ctx, es, req, r.Client, r.Scheme)
+	es.Status.Health = dbv1.ElasticsearchUnknownHealth
+	es.Status.Phase = dbv1.ElasticsearchResourceInvalid
+	defer func() {
+		err := r.updateStatus(ctx, es)
+		// err := r.Client.Status().Update(ctx, es)
+		if err != nil {
+			logger.Error(err, "failed to update cluster status")
+		}
+	}()
 
-	data, err := GetHealth(es)
-	if err != nil {
+	if err := k8s.ReconcileConfigMap(ctx, es, req, r.Client, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := k8s.ReconcileElasticServices(ctx, es, req, r.Client, r.Scheme); err != nil {
+		return ctrl.Result{}, err
+	}
+	if err := k8s.ReconcileStatefulSet(ctx, es, req, r.Client, r.Scheme); err != nil {
 		return ctrl.Result{}, err
 	}
 
-	availableNodes, _ := data["number_of_nodes"].(float64)
-	es.Status.AvailableNodes = int32(availableNodes)
-	es.Status.Health, _ = data["status"].(string)
-	fmt.Println("Update Elasticsearch Status")
-	r.Status().Update(ctx, es)
-	if data["status"].(string) != "green" {
-		return ctrl.Result{}, err
-	}
+	err := r.updateStatus(ctx, es)
 
-	return ctrl.Result{}, nil
+	return ctrl.Result{}, err
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -123,6 +127,7 @@ func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	response, err := esClient.Cluster.Health()
 	if err != nil {
 		return nil, err
@@ -140,4 +145,48 @@ func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 	}
 
 	return data, err
+}
+
+func (r *ElasticsearchReconciler) updateStatus(ctx context.Context, es *dbv1.Elasticsearch) error {
+	logger := log.FromContext(ctx)
+
+	data, err := GetHealth(es)
+	if err != nil {
+		r.Status().Update(ctx, es)
+		return err
+	}
+
+	availableNodes, _ := data["number_of_nodes"].(float64)
+	availableDataNodes, _ := data["number_of_data_nodes"].(float64)
+	status, _ := data["status"].(string)
+
+	es.Status.AvailableNodes = int32(availableNodes)
+	es.Status.AvailableDataNodes = int32(availableDataNodes)
+	es.Status.Health = dbv1.ElasticsearchHealth(status)
+	logger.Info("Update Elasticsearch Status")
+	pods, err := k8s.GetPods(ctx, es, r.Client)
+
+	if len(pods.Items) != int(es.Spec.Size) {
+		es.Status.Phase = dbv1.ElasticsearchApplyingChangesPhase
+		r.Status().Update(ctx, es)
+		err = fmt.Errorf("waiting pods %d to %d ", len(pods.Items), es.Spec.Size)
+		return err
+	} else if es.Status.AvailableNodes != es.Spec.Size {
+		es.Status.Phase = dbv1.ElasticsearchApplyingChangesPhase
+		r.Status().Update(ctx, es)
+		err = fmt.Errorf("waiting for elasticsearch available nodes %d to %d ", es.Status.AvailableNodes, es.Spec.Size)
+		return err
+	} else if es.Status.Health != "green" {
+		es.Status.Phase = dbv1.ElasticsearchApplyingChangesPhase
+		r.Status().Update(ctx, es)
+		err = fmt.Errorf("waiting for elasticsearch  cluster status are green")
+		return err
+	} else {
+		es.Status.Phase = dbv1.ElasticsearchReadyPhase
+		fmt.Println("Update Elasticsearch Status ready")
+		r.Status().Update(ctx, es)
+	}
+
+	fmt.Println("Update Elasticsearch Status end")
+	return err
 }

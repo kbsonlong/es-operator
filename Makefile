@@ -153,4 +153,8 @@ $(ENVTEST): $(LOCALBIN)
 
 .PHONY: kind
 kind:
-	bash scripts/create_kind.sh && bash scripts/local-debug.sh
+	bash hack/scripts/create_kind.sh
+
+.PHONY: telepresence
+telepresence: kind
+	bash hack/scripts/local-debug.sh

@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:22:17
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 14:45:46
+ * @LastEditTime: 2023-10-11 10:45:12
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -64,7 +64,6 @@ func ReconcileElasticServices(ctx context.Context, es *dbv1.Elasticsearch, req c
 				return err
 			}
 		}
-		return err
 	}
 
 	// 创建 headless service
@@ -152,7 +151,6 @@ func ReconcileKibanaServices(ctx context.Context, kb *dbv1.Kibana, req ctrl.Requ
 				return err
 			}
 		}
-		return err
 	}
 	return nil
 }

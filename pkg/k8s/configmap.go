@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:22:36
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 12:05:08
+ * @LastEditTime: 2023-10-11 10:43:33
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -61,25 +61,7 @@ thread_pool.write.queue_size: 1000
 `
 	data := ParseConf(temp, tempMap)
 	cm := &k8scorev1.ConfigMap{}
-	// req.NamespacedName.Name = fmt.Sprintf("%s-config", es.Name)
 
-	// err := c.Get(ctx, req.NamespacedName, cm)
-
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	if errors.IsNotFound(err) {
-	// 		log.Info("Create ConfigMap")
-	// 		cm.Data = map[string]string{
-	// 			"elasticsearch.yml": data.String(),
-	// 		}
-
-	// 		err = c.Create(ctx, cm)
-	// 		fmt.Println(err)
-	// 		return err
-	// 	}
-	// 	fmt.Println(err)
-	// 	return err
-	// }
 	cm.TypeMeta = metav1.TypeMeta{
 		Kind:       "ConfigMap",
 		APIVersion: "v1",
@@ -91,7 +73,12 @@ thread_pool.write.queue_size: 1000
 	cm.Data = map[string]string{
 		"elasticsearch.yml": data.String(),
 	}
-
+	// 建立关联后，删除 crd 资源时就会将 service 也删除掉
+	// log.Info("set svc reference")
+	if err := controllerutil.SetControllerReference(es, cm, Scheme); err != nil {
+		log.Error(err, "SetControllerReference error")
+		return err
+	}
 	if err := c.Create(ctx, cm); err != nil {
 		if errors.IsAlreadyExists(err) {
 			if err := c.Update(ctx, cm); err != nil {
@@ -99,18 +86,6 @@ thread_pool.write.queue_size: 1000
 				return err
 			}
 		}
-		return err
-	}
-	// err = c.Update(ctx, cm)
-	// if err != nil {
-	// 	log.Info("Update ConfigMap failed")
-	// 	return err
-	// }
-	// 建立关联后，删除 crd 资源时就会将 service 也删除掉
-	// log.Info("set svc reference")
-	if err := controllerutil.SetControllerReference(es, cm, Scheme); err != nil {
-		log.Error(err, "SetControllerReference error")
-		return err
 	}
 	return nil
 }

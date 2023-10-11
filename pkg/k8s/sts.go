@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:21:56
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 12:02:49
+ * @LastEditTime: 2023-10-11 17:04:55
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -12,12 +12,14 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"math"
 
 	dbv1 "github.com/kbsonlong/es-operator/api/v1"
 	apps "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -27,18 +29,20 @@ import (
 )
 
 const (
-	NameLabel      = "app.kubernetes.io/name"
-	InstanceLabel  = "app.kubernetes.io/instance"
-	ManagedByLabel = "app.kubernetes.io/managed-by"
-	PartOfLabel    = "app.kubernetes.io/part-of"
-	ComponentLabel = "app.kubernetes.io/component"
+	NameLabel              = "app.kubernetes.io/name"
+	InstanceLabel          = "app.kubernetes.io/instance"
+	ManagedByLabel         = "app.kubernetes.io/managed-by"
+	PartOfLabel            = "app.kubernetes.io/part-of"
+	ComponentLabel         = "app.kubernetes.io/component"
+	minJvmGB       float64 = 0.5
+	gigaByte       int64   = 1 << 30
+	megabytes      int64   = 1 << 29
 )
 
 func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.Request, c client.Client, Scheme *runtime.Scheme) error {
 
 	log := log.FromContext(ctx)
-	JVM_SIZE := "800m"
-	// MemLimit = es.Spec.Resources.Limits.Memory()
+	JVM_SIZE := getJvmSizeGB(es.Spec.Resources.Limits, true)
 
 	fileMode := int32(0644)
 	volumes := []k8scorev1.Volume{
@@ -207,7 +211,6 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 				return err
 			}
 		}
-		return err
 	}
 
 	return nil
@@ -227,4 +230,42 @@ func Labels(es *dbv1.Elasticsearch) map[string]string {
 		ManagedByLabel: "es-operator",
 		PartOfLabel:    "es-cluster",
 	}
+}
+
+// 0.5 * ( memoryLimit -  1GB )
+func getJvmSizeGB(resourceList k8scorev1.ResourceList, subtract1GB bool) string {
+	maxMemory := resourceList[k8scorev1.ResourceMemory]
+	fmt.Println(maxMemory.Value())
+	fmt.Println(float64(maxMemory.Value() / megabytes))
+	var size float64
+	if subtract1GB {
+		size = math.Floor(0.5 * float64(maxMemory.Value()-gigaByte))
+	} else {
+		size = math.Floor(0.5 * float64(maxMemory.Value()))
+	}
+	sizeGB := size / float64(gigaByte)
+	if sizeGB < minJvmGB {
+		sizeGB = minJvmGB
+	}
+
+	jvm := fmt.Sprintf("%dG", int(size))
+	fmt.Println(size / float64(megabytes))
+	if sizeGB < 1 {
+		size = sizeGB * 1024
+		jvm = fmt.Sprintf("%dM", int(size))
+	}
+
+	return jvm
+}
+
+func GetPods(ctx context.Context, cluster *dbv1.Elasticsearch, c client.Client) (k8scorev1.PodList, error) {
+	Pods := k8scorev1.PodList{}
+	err := c.List(ctx,
+		&Pods,
+		&client.ListOptions{
+			Namespace:     cluster.Namespace,
+			LabelSelector: labels.SelectorFromSet(Labels(cluster)),
+		},
+	)
+	return Pods, err
 }

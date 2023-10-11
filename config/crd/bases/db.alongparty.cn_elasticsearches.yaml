@@ -26,8 +26,14 @@ spec:
     - jsonPath: .status.health
       name: Health
       type: string
+    - jsonPath: .status.phase
+      name: Phase
+      type: string
     - jsonPath: .status.availableNodes
       name: AvailableNodes
+      type: integer
+    - jsonPath: .status.availableDataNodes
+      name: AvailableDataNodes
       type: integer
     name: v1
     schema:
@@ -106,8 +112,13 @@ spec:
           status:
             description: ElasticsearchStatus defines the observed state of Elasticsearch
             properties:
+              availableDataNodes:
+                description: AvailableDataNodes is the number of available role data
+                  instances.
+                format: int32
+                type: integer
               availableNodes:
-                description: AvailableNodes is the number of available instances.
+                description: AvailableNodes is the number of available all instances.
                 format: int32
                 type: integer
               health:

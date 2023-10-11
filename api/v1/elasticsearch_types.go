@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 18:20:32
+ * @LastEditTime: 2023-10-11 14:00:41
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -69,13 +69,15 @@ type ElasticsearchSpec struct {
 // ElasticsearchStatus defines the observed state of Elasticsearch
 type ElasticsearchStatus struct {
 
-	// AvailableNodes is the number of available instances.
+	// AvailableNodes is the number of available all instances.
 	AvailableNodes int32 `json:"availableNodes,omitempty"`
+	// AvailableDataNodes is the number of available role data instances.
+	AvailableDataNodes int32 `json:"availableDataNodes,omitempty"`
 	// Version of the stack resource currently running. During version upgrades, multiple versions may run
 	// in parallel: this value specifies the lowest version currently running.
 	Version string `json:"version,omitempty"`
 	//+kubebuilder:default:= unknown
-	Health string                          `json:"health,omitempty"`
+	Health ElasticsearchHealth             `json:"health,omitempty"`
 	Phase  ElasticsearchOrchestrationPhase `json:"phase,omitempty"`
 }
 
@@ -84,7 +86,9 @@ type ElasticsearchStatus struct {
 //+kubebuilder:resource:categories=db,path=elasticsearches,shortName=es,singular=elasticsearch
 //+kubebuilder:printcolumn:JSONPath=.spec.size,name=Size,type=integer
 //+kubebuilder:printcolumn:JSONPath=.status.health,name=Health,type=string
+//+kubebuilder:printcolumn:JSONPath=.status.phase,name=Phase,type=string
 //+kubebuilder:printcolumn:JSONPath=.status.availableNodes,name=AvailableNodes,type=integer
+//+kubebuilder:printcolumn:JSONPath=.status.availableDataNodes,name=AvailableDataNodes,type=integer
 
 // Elasticsearch is the Schema for the elasticsearches API
 type Elasticsearch struct {
