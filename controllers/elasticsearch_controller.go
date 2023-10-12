@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-11 16:06:11
+ * @LastEditTime: 2023-10-12 17:34:23
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -39,9 +39,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
-	"github.com/elastic/go-elasticsearch"
+	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	dbv1 "github.com/kbsonlong/es-operator/api/v1"
 	"github.com/kbsonlong/es-operator/pkg/k8s"
+)
+
+const (
+	defaultDomain = "cluster.local"
 )
 
 // ElasticsearchReconciler reconciles a Elasticsearch object
@@ -118,14 +122,38 @@ func (r *ElasticsearchReconciler) SetupWithManager(mgr ctrl.Manager) error {
 }
 
 func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
-	cfg := elasticsearch.Config{
+	cfg := elasticsearch7.Config{
 		Addresses: []string{
-			fmt.Sprintf("http://%s.%s.svc.%s:9200", es.Name, es.Namespace, "cluster.local"),
+			fmt.Sprintf("http://%s.%s.svc.%s:9200", es.Name, es.Namespace, defaultDomain),
 		},
+		// Base Authentication
+		// Username: "elastic",
+		// Password: "5Z1YI056Zc9RtQt51nBrm5p7",
+		// Disable Tls
+		// Transport: &http.Transport{
+		// 	TLSClientConfig: &tls.Config{
+		// 		InsecureSkipVerify: true,
+		// 	},
+		// },
 	}
-	esClient, err := elasticsearch.NewClient(cfg)
+	esClient, err := elasticsearch7.NewClient(cfg)
 	if err != nil {
 		return nil, err
+	}
+
+	buf := new(bytes.Buffer)
+	var data map[string]interface{}
+
+	esInfo, err := esClient.Info()
+	if err != nil {
+		return nil, err
+	}
+	buf.ReadFrom(esInfo.Body)
+	esInfoBytes := buf.String()
+	esInfoString := string(esInfoBytes)
+	err = json.Unmarshal([]byte(esInfoString), &data)
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	response, err := esClient.Cluster.Health()
@@ -133,12 +161,10 @@ func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 		return nil, err
 	}
 
-	buf := new(bytes.Buffer)
 	buf.ReadFrom(response.Body)
 	respBytes := buf.String()
 	respString := string(respBytes)
 
-	var data map[string]interface{}
 	err = json.Unmarshal([]byte(respString), &data)
 	if err != nil {
 		fmt.Println(err)
@@ -187,6 +213,5 @@ func (r *ElasticsearchReconciler) updateStatus(ctx context.Context, es *dbv1.Ela
 		r.Status().Update(ctx, es)
 	}
 
-	fmt.Println("Update Elasticsearch Status end")
 	return err
 }

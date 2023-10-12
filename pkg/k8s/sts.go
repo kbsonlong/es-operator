@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:21:56
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-11 17:04:55
+ * @LastEditTime: 2023-10-12 09:34:04
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -235,8 +235,7 @@ func Labels(es *dbv1.Elasticsearch) map[string]string {
 // 0.5 * ( memoryLimit -  1GB )
 func getJvmSizeGB(resourceList k8scorev1.ResourceList, subtract1GB bool) string {
 	maxMemory := resourceList[k8scorev1.ResourceMemory]
-	fmt.Println(maxMemory.Value())
-	fmt.Println(float64(maxMemory.Value() / megabytes))
+
 	var size float64
 	if subtract1GB {
 		size = math.Floor(0.5 * float64(maxMemory.Value()-gigaByte))
@@ -251,8 +250,8 @@ func getJvmSizeGB(resourceList k8scorev1.ResourceList, subtract1GB bool) string 
 	jvm := fmt.Sprintf("%dG", int(size))
 	fmt.Println(size / float64(megabytes))
 	if sizeGB < 1 {
-		size = sizeGB * 1024
-		jvm = fmt.Sprintf("%dM", int(size))
+		sizeMB := sizeGB * 1024
+		jvm = fmt.Sprintf("%dM", int(sizeMB))
 	}
 
 	return jvm
