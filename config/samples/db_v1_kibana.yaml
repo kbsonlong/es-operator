@@ -11,3 +11,5 @@ metadata:
 spec:
   size: 1
   image:  docker.elastic.co/kibana/kibana:7.13.4
+  esinfo:
+    host: elasticsearch-sample.default.svc.cluster.local

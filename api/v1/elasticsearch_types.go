@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-11 14:00:41
+ * @LastEditTime: 2023-10-13 10:30:55
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -63,7 +63,36 @@ const (
 type ElasticsearchSpec struct {
 	Size      int32                          `json:"size,omitempty"`
 	Image     string                         `json:"image,omitempty"`
+	NodeSets  []NodeSet                      `json:"nodeSets"`
 	Resources k8scorev1.ResourceRequirements `json:"resource,omitempty"`
+}
+
+// NodeSet is the specification for a group of Elasticsearch nodes sharing the same configuration and a Pod template.
+type NodeSet struct {
+	// Name of this set of nodes. Becomes a part of the Elasticsearch node.name setting.
+	// +kubebuilder:validation:Pattern=[a-zA-Z0-9-]+
+	// +kubebuilder:validation:MaxLength=23
+	Name string `json:"name"`
+
+	// Config holds the Elasticsearch configuration.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config *Config `json:"config,omitempty"`
+
+	// Count of Elasticsearch nodes to deploy.
+	// If the node set is managed by an autoscaling policy the initial value is automatically set by the autoscaling controller.
+	// +kubebuilder:validation:Optional
+	Count int32 `json:"count"`
+
+	// PodTemplate provides customisation options (labels, annotations, affinity rules, resource requests, and so on) for the Pods belonging to this NodeSet.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:pruning:PreserveUnknownFields
+	PodTemplate k8scorev1.PodTemplateSpec `json:"podTemplate,omitempty"`
+
+	// VolumeClaimTemplates is a list of persistent volume claims to be used by each Pod in this NodeSet.
+	// Every claim in this list must have a matching volumeMount in one of the containers defined in the PodTemplate.
+	// Items defined here take precedence over any default claims added by the operator with the same name.
+	// +kubebuilder:validation:Optional
+	VolumeClaimTemplates []k8scorev1.PersistentVolumeClaim `json:"volumeClaimTemplates,omitempty"`
 }
 
 // ElasticsearchStatus defines the observed state of Elasticsearch

@@ -1,9 +1,9 @@
 /*
- * @FilePath: /controllers/elasticsearch_controller.go
+ * @FilePath: /Users/zengshenglong/Code/GoWorkSpace/operators/es-operator/controllers/elasticsearch_controller.go
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-12 17:34:23
+ * @LastEditTime: 2023-10-23 18:39:18
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -41,7 +41,9 @@ import (
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	dbv1 "github.com/kbsonlong/es-operator/api/v1"
+	"github.com/kbsonlong/es-operator/pkg/elastic"
 	"github.com/kbsonlong/es-operator/pkg/k8s"
+	apps "k8s.io/api/apps/v1"
 )
 
 const (
@@ -77,6 +79,34 @@ func (r *ElasticsearchReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	logger := log.FromContext(ctx)
 
 	es := &dbv1.Elasticsearch{}
+	// fmt.Println(elastic.BaseConfig(es.Name, "ipv4"))
+	cfg := elastic.BaseConfig(es.Name, "ipv4")
+	fmt.Println(cfg)
+	// for _, nodeSpec := range es.Spec.NodeSets {
+	// 	// build es config
+	// 	userCfg := dbv1.Config{}
+	// 	if nodeSpec.Config != nil {
+	// 		userCfg = *nodeSpec.Config
+	// 	}
+	// 	cfg, err := settings.NewMergedESConfig(es.Name, ver, ipFamily, es.Spec.HTTP, userCfg)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+
+	// 	// build stateful set and associated headless service
+	// 	statefulSet, err := BuildStatefulSet(ctx, client, es, nodeSpec, cfg, keystoreResources, existingStatefulSets, setDefaultSecurityContext)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	headlessSvc := HeadlessService(&es, statefulSet.Name)
+
+	// 	nodesResources = append(nodesResources, Resources{
+	// 		NodeSet:         nodeSpec.Name,
+	// 		StatefulSet:     statefulSet,
+	// 		HeadlessService: headlessSvc,
+	// 		Config:          cfg,
+	// 	})
+	// }
 
 	if err := r.Get(ctx, req.NamespacedName, es); err != nil {
 		if errors.IsNotFound(err) {
@@ -118,6 +148,7 @@ func (r *ElasticsearchReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 func (r *ElasticsearchReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&dbv1.Elasticsearch{}).
+		Owns(&apps.StatefulSet{}).
 		Complete(r)
 }
 
@@ -144,18 +175,6 @@ func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 	buf := new(bytes.Buffer)
 	var data map[string]interface{}
 
-	esInfo, err := esClient.Info()
-	if err != nil {
-		return nil, err
-	}
-	buf.ReadFrom(esInfo.Body)
-	esInfoBytes := buf.String()
-	esInfoString := string(esInfoBytes)
-	err = json.Unmarshal([]byte(esInfoString), &data)
-	if err != nil {
-		fmt.Println(err)
-	}
-
 	response, err := esClient.Cluster.Health()
 	if err != nil {
 		return nil, err
@@ -167,7 +186,7 @@ func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 
 	err = json.Unmarshal([]byte(respString), &data)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("json data", err)
 	}
 
 	return data, err

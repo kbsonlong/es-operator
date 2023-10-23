@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 10:40:59
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-10 15:43:37
+ * @LastEditTime: 2023-10-13 18:08:57
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -48,8 +48,9 @@ type EsInfo struct {
 	//+kubebuilder:default:= http
 	Schema string `json:"schema,omitempty"`
 	Host   string `json:"host,omitempty"`
-	Port   int    `json:"port,omitempty"`
-	Auth   Auth   `json:"auth,omitempty"`
+	//+kubebuilder:default:= 9200
+	Port int  `json:"port,omitempty"`
+	Auth Auth `json:"auth,omitempty"`
 }
 
 type Auth struct {
