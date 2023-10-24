@@ -1,9 +1,9 @@
 /*
- * @FilePath: /pkg/k8s/sts.go
+ * @FilePath: /Users/zengshenglong/Code/GoWorkSpace/operators/es-operator/pkg/k8s/sts.go
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:21:56
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-12 09:34:04
+ * @LastEditTime: 2023-10-24 16:07:39
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -13,6 +13,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"os"
 
 	dbv1 "github.com/kbsonlong/es-operator/api/v1"
 	apps "k8s.io/api/apps/v1"
@@ -43,6 +44,11 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 
 	log := log.FromContext(ctx)
 	JVM_SIZE := getJvmSizeGB(es.Spec.Resources.Limits, true)
+
+	var ClusterDomain string
+	if ClusterDomain := os.Getenv("ClusterDomain"); ClusterDomain != "" {
+		ClusterDomain = dbv1.DefaultDomain
+	}
 
 	fileMode := int32(0644)
 	volumes := []k8scorev1.Volume{
@@ -122,6 +128,10 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 				{
 					Name:  "HEADLESS_SERVICE_NAME",
 					Value: fmt.Sprintf("%s-headless", es.Name),
+				},
+				{
+					Name:  "ClusterDomain",
+					Value: ClusterDomain,
 				},
 			},
 			Ports: []k8scorev1.ContainerPort{

@@ -1,9 +1,9 @@
 /*
- * @FilePath: /pkg/k8s/configmap.go
+ * @FilePath: /Users/zengshenglong/Code/GoWorkSpace/operators/es-operator/pkg/k8s/configmap.go
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:22:36
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-11 10:43:33
+ * @LastEditTime: 2023-10-24 15:54:43
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -35,14 +35,14 @@ bootstrap.system_call_filter: true
 cluster.routing.allocation.same_shard.host: true
 cluster.name: {{.Name}}
 cluster.initial_master_nodes: [{{range $x := loop .Name .Size}}{{$x}},{{- end}}]
-discovery.seed_hosts: ["${HEADLESS_SERVICE_NAME}.${NAMESPACE}.svc.cluster.local"]
+discovery.seed_hosts: ["${HEADLESS_SERVICE_NAME}.${NAMESPACE}.svc.${ClusterDomain}"]
 discovery.zen.ping_timeout: 90s
 discovery.zen.fd.ping_interval: 10s
 discovery.zen.fd.ping_timeout: 120s
 discovery.zen.fd.ping_retries: 12
-network.host: "0"
-network.bind_host: ${POD_IP}
-network.publish_host: ${POD_IP}
+network.host: ${POD_NAME}
+network.bind_host: ${POD_NAME}
+network.publish_host: ${POD_NAME}
 node.master: true
 node.data: true
 node.name: ${POD_NAME}

@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-23 18:39:18
+ * @LastEditTime: 2023-10-24 16:06:04
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -44,10 +44,7 @@ import (
 	"github.com/kbsonlong/es-operator/pkg/elastic"
 	"github.com/kbsonlong/es-operator/pkg/k8s"
 	apps "k8s.io/api/apps/v1"
-)
-
-const (
-	defaultDomain = "cluster.local"
+	k8scorev1 "k8s.io/api/core/v1"
 )
 
 // ElasticsearchReconciler reconciles a Elasticsearch object
@@ -149,13 +146,15 @@ func (r *ElasticsearchReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&dbv1.Elasticsearch{}).
 		Owns(&apps.StatefulSet{}).
+		Owns(&k8scorev1.Service{}).
+		Owns(&k8scorev1.ConfigMap{}).
 		Complete(r)
 }
 
 func GetHealth(es *dbv1.Elasticsearch) (map[string]interface{}, error) {
 	cfg := elasticsearch7.Config{
 		Addresses: []string{
-			fmt.Sprintf("http://%s.%s.svc.%s:9200", es.Name, es.Namespace, defaultDomain),
+			fmt.Sprintf("http://%s.%s.svc.%s:9200", es.Name, es.Namespace, dbv1.DefaultDomain),
 		},
 		// Base Authentication
 		// Username: "elastic",

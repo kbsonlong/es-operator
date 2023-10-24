@@ -1,9 +1,9 @@
 /*
- * @FilePath: /api/v1/elasticsearch_types.go
+ * @FilePath: /Users/zengshenglong/Code/GoWorkSpace/operators/es-operator/api/v1/elasticsearch_types.go
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-13 10:30:55
+ * @LastEditTime: 2023-10-24 16:01:46
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -38,6 +38,10 @@ const (
 	ElasticsearchYellowHealth  ElasticsearchHealth = "yellow"
 	ElasticsearchGreenHealth   ElasticsearchHealth = "green"
 	ElasticsearchUnknownHealth ElasticsearchHealth = "unknown"
+)
+
+const (
+	DefaultDomain = "cluster.local"
 )
 
 // ElasticsearchOrchestrationPhase is the phase Elasticsearch is in from the controller point of view.

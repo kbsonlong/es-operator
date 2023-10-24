@@ -80,7 +80,7 @@ func ReconcileDeploymant(ctx context.Context, kb *dbv1.Kibana, req ctrl.Request,
 				},
 				{
 					Name:  "ELASTICSEARCH_HOSTS",
-					Value: fmt.Sprintf("[\"http://elasticsearch-sample.%s.svc.cluster.local:9200\"]", kb.Namespace),
+					Value: fmt.Sprintf("[\"%s://%s:%d\"]", kb.Spec.EsInfo.Schema, kb.Spec.EsInfo.Host, kb.Spec.EsInfo.Port),
 				},
 			},
 			Ports: []k8scorev1.ContainerPort{
