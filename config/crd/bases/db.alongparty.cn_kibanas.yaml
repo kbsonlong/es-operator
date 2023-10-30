@@ -55,6 +55,7 @@ spec:
                   host:
                     type: string
                   port:
+                    default: 9200
                     type: integer
                   schema:
                     default: http

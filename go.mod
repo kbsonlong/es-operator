@@ -14,7 +14,6 @@ require (
 require (
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-ucfg v0.8.6
-	github.com/hashicorp/go-version v1.6.0
 )
 
 require (

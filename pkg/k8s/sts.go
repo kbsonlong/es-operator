@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-10 11:21:56
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-24 16:07:39
+ * @LastEditTime: 2023-10-30 16:20:47
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -19,6 +19,7 @@ import (
 	apps "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,10 +46,12 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 	log := log.FromContext(ctx)
 	JVM_SIZE := getJvmSizeGB(es.Spec.Resources.Limits, true)
 
-	var ClusterDomain string
-	if ClusterDomain := os.Getenv("ClusterDomain"); ClusterDomain != "" {
+	ClusterDomain := dbv1.DefaultDomain
+	if ClusterDomain := os.Getenv("ClusterDomain"); ClusterDomain == "" {
 		ClusterDomain = dbv1.DefaultDomain
 	}
+
+	storageclass := "standard"
 
 	fileMode := int32(0644)
 	volumes := []k8scorev1.Volume{
@@ -66,7 +69,7 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 				DefaultMode: &fileMode,
 			},
 		}),
-		EnsureVolume("data", k8scorev1.VolumeSource{
+		EnsureVolume("plugins", k8scorev1.VolumeSource{
 			EmptyDir: &k8scorev1.EmptyDirVolumeSource{},
 		}),
 	}
@@ -146,13 +149,18 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 			},
 			VolumeMounts: []k8scorev1.VolumeMount{
 				{
-					Name:      "data",
+					Name:      es.Name,
 					MountPath: "/usr/share/elasticsearch/data",
 				},
 				{
 					Name:      "elasticsearch-config",
 					MountPath: "/usr/share/elasticsearch/config/elasticsearch.yml",
 					SubPath:   "elasticsearch.yml",
+				},
+				{
+					Name:      "plugins",
+					MountPath: "/usr/share/elasticsearch/plugins",
+					SubPath:   "plugins",
 				},
 			},
 			ReadinessProbe: &k8scorev1.Probe{
@@ -172,12 +180,24 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 
 	initContainers := []k8scorev1.Container{
 		{
-			Name:            fmt.Sprintf("%s-init", es.Name),
+			Name:            "sysctl-init",
 			Image:           "busybox",
 			ImagePullPolicy: "IfNotPresent",
 			Command:         []string{"sysctl", "-w", "vm.max_map_count=262144"},
 			SecurityContext: &k8scorev1.SecurityContext{
 				Privileged: &priObj,
+			},
+		},
+		{
+			Name:            "plugins-init",
+			Image:           "registry.cn-hangzhou.aliyuncs.com/seam/es-plugins:7.3.2",
+			ImagePullPolicy: "IfNotPresent",
+			Command:         []string{"/bin/cp", "-r", "/usr/share/elasticsearch/plugins", "/usr/elasticsearch/plugins"},
+			VolumeMounts: []k8scorev1.VolumeMount{
+				{
+					Name:      "plugins",
+					MountPath: "/usr/elasticsearch/plugins",
+				},
 			},
 		},
 	}
@@ -198,9 +218,29 @@ func ReconcileStatefulSet(ctx context.Context, es *dbv1.Elasticsearch, req ctrl.
 					Labels: Labels(es),
 				},
 				Spec: k8scorev1.PodSpec{
+					Affinity:       &es.Spec.Affinity,
 					InitContainers: initContainers,
 					Containers:     containers,
 					Volumes:        volumes,
+				},
+			},
+			VolumeClaimTemplates: []k8scorev1.PersistentVolumeClaim{
+				{
+					ObjectMeta: metav1.ObjectMeta{
+						Namespace: es.Namespace,
+						Name:      es.Name,
+					},
+					Spec: k8scorev1.PersistentVolumeClaimSpec{
+						AccessModes: []k8scorev1.PersistentVolumeAccessMode{
+							k8scorev1.ReadWriteOnce,
+						},
+						Resources: k8scorev1.ResourceRequirements{
+							Requests: k8scorev1.ResourceList{
+								k8scorev1.ResourceStorage: resource.MustParse("1Gi"),
+							},
+						},
+						StorageClassName: &storageclass,
+					},
 				},
 			},
 		},
@@ -258,7 +298,7 @@ func getJvmSizeGB(resourceList k8scorev1.ResourceList, subtract1GB bool) string 
 	}
 
 	jvm := fmt.Sprintf("%dG", int(size))
-	fmt.Println(size / float64(megabytes))
+	// fmt.Println(size / float64(megabytes))
 	if sizeGB < 1 {
 		sizeMB := sizeGB * 1024
 		jvm = fmt.Sprintf("%dM", int(sizeMB))

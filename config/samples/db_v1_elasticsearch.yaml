@@ -10,8 +10,20 @@ metadata:
   name: elasticsearch-sample
 spec:
   # TODO(user): Add fields here
-  size: 5
-  image: docker.elastic.co/elasticsearch/elasticsearch:7.13.4
+  size: 3
+  image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
   resource:
     limits:
-      memory: 1G
+      memory: 2G
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            labelSelector:
+              matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - elasticsearch
+            topologyKey: kubernetes.io/os

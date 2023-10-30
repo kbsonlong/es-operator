@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-24 16:06:04
+ * @LastEditTime: 2023-10-25 17:09:23
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -41,7 +41,6 @@ import (
 
 	elasticsearch7 "github.com/elastic/go-elasticsearch/v7"
 	dbv1 "github.com/kbsonlong/es-operator/api/v1"
-	"github.com/kbsonlong/es-operator/pkg/elastic"
 	"github.com/kbsonlong/es-operator/pkg/k8s"
 	apps "k8s.io/api/apps/v1"
 	k8scorev1 "k8s.io/api/core/v1"
@@ -77,8 +76,8 @@ func (r *ElasticsearchReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	es := &dbv1.Elasticsearch{}
 	// fmt.Println(elastic.BaseConfig(es.Name, "ipv4"))
-	cfg := elastic.BaseConfig(es.Name, "ipv4")
-	fmt.Println(cfg)
+	// cfg := elastic.BaseConfig(es.Name, "ipv4")
+	// fmt.Println(cfg)
 	// for _, nodeSpec := range es.Spec.NodeSets {
 	// 	// build es config
 	// 	userCfg := dbv1.Config{}
