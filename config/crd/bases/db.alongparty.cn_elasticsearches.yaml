@@ -883,6 +883,10 @@ spec:
                         type: array
                     type: object
                 type: object
+              config:
+                description: Config holds the Elasticsearch configuration.
+                type: object
+                x-kubernetes-preserve-unknown-fields: true
               image:
                 type: string
               resource:

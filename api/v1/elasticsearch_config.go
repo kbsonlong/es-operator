@@ -1,15 +1,19 @@
 /*
- * @FilePath: /api/v1/elasticsearch_config.go
+ * @FilePath: /Users/zengshenglong/Code/GoWorkSpace/operators/es-operator/api/v1/elasticsearch_config.go
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-13 10:28:40
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-13 10:30:48
+ * @LastEditTime: 2023-12-22 16:48:10
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
 package v1
 
-import "github.com/elastic/go-ucfg"
+import (
+	"encoding/json"
+
+	"gopkg.in/yaml.v2"
+)
 
 const (
 	ClusterName = "cluster.name"
@@ -54,6 +58,7 @@ const (
 	XPackSecurityTransportSslVerificationMode       = "xpack.security.transport.ssl.verification_mode"
 
 	XPackLicenseUploadTypes = "xpack.license.upload.types" // supported >= 7.6.0 used as of 7.8.1
+
 )
 
 type Config struct {
@@ -62,6 +67,29 @@ type Config struct {
 	Data map[string]interface{} `json:"-"`
 }
 
-type CanonicalConfig struct {
-	*ucfg.Config
+// NewConfig constructs a Config with the given unstructured configuration data.
+func NewConfig(cfg map[string]interface{}) Config {
+	return Config{Data: cfg}
+}
+
+// MarshalJSON implements the Marshaler interface.
+func (c Config) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.Data)
+}
+
+// MarshalYAML implements the Marshaler interface.
+func (c Config) MarshalYAML() ([]byte, error) {
+	return yaml.Marshal(c.Data)
+
+}
+
+// UnmarshalJSON implements the Unmarshaler interface.
+func (c *Config) UnmarshalJSON(data []byte) error {
+	var out map[string]interface{}
+	err := json.Unmarshal(data, &out)
+	if err != nil {
+		return err
+	}
+	c.Data = out
+	return nil
 }

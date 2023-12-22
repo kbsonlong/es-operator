@@ -14,7 +14,25 @@ spec:
   image: docker.elastic.co/elasticsearch/elasticsearch:7.3.2
   resource:
     limits:
-      memory: 2G
+      memory: 1G
+  config:
+    bootstrap.memory_lock: false
+    bootstrap.system_call_filter: false
+    http.port:  9200
+    transport.port:  9300
+    path.data: /usr/share/elasticsearch/data
+    path.logs: /usr/share/elasticsearch/logs
+    cluster.routing.allocation.same_shard.host: true
+    indices.query.bool.max_clause_count : 2048
+    indices.memory.index_buffer_size: 30%
+    indices.fielddata.cache.size: 40%
+    indices.breaker.fielddata.limit: 70%
+    indices.recovery.max_bytes_per_sec: 20mb
+    indices.breaker.total.use_real_memory: false
+    thread_pool.write.queue_size: 1000
+    xpack.security.enabled: false
+    xpack.security.transport.ssl.enabled: false
+    xpack.security.http.ssl.enabled: false
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:

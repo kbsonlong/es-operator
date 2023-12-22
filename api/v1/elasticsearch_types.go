@@ -3,7 +3,7 @@
  * @Author: kbsonlong kbsonlong@gmail.com
  * @Date: 2023-10-09 13:00:45
  * @LastEditors: kbsonlong kbsonlong@gmail.com
- * @LastEditTime: 2023-10-30 16:18:01
+ * @LastEditTime: 2023-12-22 16:40:33
  * @Description:
  * Copyright (c) 2023 by kbsonlong, All Rights Reserved.
  */
@@ -67,6 +67,9 @@ const (
 type ElasticsearchSpec struct {
 	Size  int32  `json:"size,omitempty"`
 	Image string `json:"image,omitempty"`
+	// Config holds the Elasticsearch configuration.
+	// +kubebuilder:pruning:PreserveUnknownFields
+	Config *Config `json:"config,omitempty"`
 	// NodeSets  []NodeSet                      `json:"nodeSets"`
 	Resources k8scorev1.ResourceRequirements `json:"resource,omitempty"`
 	Affinity  k8scorev1.Affinity             `json:"affinity,omitempty"`

@@ -14,6 +14,8 @@ require (
 require (
 	github.com/elastic/go-elasticsearch/v7 v7.17.10
 	github.com/elastic/go-ucfg v0.8.6
+	github.com/evanphx/json-patch v5.6.0+incompatible
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
@@ -65,7 +67,6 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/apiextensions-apiserver v0.27.2 // indirect
 	k8s.io/component-base v0.27.2 // indirect
